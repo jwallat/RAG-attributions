@@ -1,0 +1,17 @@
+transformers
+accelerate
+bitsandbytes
+langchain==0.2.6
+sentence-transformers
+faiss-gpu
+openpyxl
+pacmap
+datasets
+langchain-community
+ragatouille
+# langchain_progress
+langchain_huggingface
+wandb
+hydra-core
+protobuf
+spacy # python -m spacy download en

@@ -1,0 +1,29 @@
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+wandb:
+  project_name: "rag-attributions"
+  mode: "dryrun" #online for syncing
+
+dataset:
+  name: "wiki" 
+  use_cached_dataset: false
+
+model:
+  name: "CohereForAI/c4ai-command-r-plus-4bit"
+  batch_size: 8
+  generation_config:
+    max_new_tokens: 256
+
+retriever:
+  embedding_model_name: "thenlper/gte-small"
+  # embedding_model_name: "thenlper/gte-large"
+  # embedding_model_name: "Alibaba-NLP/gte-Qwen2-7B-instruct"
+  use_cached_embeddings: false
+
+reranker:
+  model_name: "colbert-ir/colbertv2.0"
+
+# defaults:
+#   - override hydra/job_logging: custom

@@ -1,0 +1,12 @@
+/__pycache__
+/advanced_rag.ipynb
+/advanced_rag.py
+/data
+/datasets.ipynb
+/download_datasets.py
+/mp_worker.py
+/outputs
+/run_download_datasets.sub
+/run_grounded.sub
+/run_rag.sub
+/wandb
