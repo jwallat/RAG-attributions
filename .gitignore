@@ -1,4 +1,5 @@
-/__pycache__
+/__pycache__/
+src/__pycache__/*
 /advanced_rag.ipynb
 /advanced_rag.py
 /data
@@ -8,3 +9,5 @@
 /outputs
 *.sub
 /wandb
+*.pyc
+src/__pycache__/vector_store.cpython-310.pyc

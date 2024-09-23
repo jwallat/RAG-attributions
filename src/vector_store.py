@@ -53,59 +53,69 @@ def get_vector_store(cfg: DictConfig) -> Tuple[FAISS, HuggingFaceEmbeddings]:
 
 def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
 
-    if not cfg.dataset.use_cached_dataset:
+    if not cfg.dataset.use_cached_preprocessed_dataset:
 
-        log.info("Preapring data:")
+        if not cfg.dataset.use_cached_raw_dataset:
 
-        if cfg.dataset.name == "wiki":
-            dataset = datasets.load_dataset("kilt_wikipedia", split="full")
-            log.info(f"Dataset has so many items: {len(dataset)}")
+            log.info("Preapring data:")
 
-            RAW_KNOWLEDGE_BASE = [
-                LangchainDocument(
-                    page_content="".join(line for line in doc["text"]["paragraph"]),
-                    metadata={
-                        "anchors": doc["anchors"],
-                        "wikidata_info": doc["wikidata_info"],
-                        "kilt_id": doc["kilt_id"],
-                        "wikipedia_id": doc["wikipedia_id"],
-                        "wikipedia_title": doc["wikipedia_title"],
-                    },
-                )
-                for doc in tqdm(dataset)
-            ]
+            if cfg.dataset.name == "wiki":
+                dataset = datasets.load_dataset("kilt_wikipedia", split="full")
+                log.info(f"Dataset has so many items: {len(dataset)}")
 
-        elif cfg.dataset.name == "squad":
-            # Squad v2
-            # dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train")
-            dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train[:10]")
-            RAW_KNOWLEDGE_BASE = [
-                LangchainDocument(
-                    page_content=doc["context"], metadata={"source": doc["id"]}
-                )
-                for doc in tqdm(dataset)
-            ]
+                RAW_KNOWLEDGE_BASE = [
+                    LangchainDocument(
+                        page_content="".join(line for line in doc["text"]["paragraph"]),
+                        metadata={
+                            "anchors": doc["anchors"],
+                            "wikidata_info": doc["wikidata_info"],
+                            "kilt_id": doc["kilt_id"],
+                            "wikipedia_id": doc["wikipedia_id"],
+                            "wikipedia_title": doc["wikipedia_title"],
+                        },
+                    )
+                    for doc in tqdm(dataset)
+                ]
 
-        del dataset
-        log.info(f"So many docs in KB: {len(RAW_KNOWLEDGE_BASE)}")
+            elif cfg.dataset.name == "squad":
+                # Squad v2
+                # dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train")
+                dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train[:10]")
+                RAW_KNOWLEDGE_BASE = [
+                    LangchainDocument(
+                        page_content=doc["context"], metadata={"source": doc["id"]}
+                    )
+                    for doc in tqdm(dataset)
+                ]
+
+            del dataset
+            log.info(f"So many docs in KB: {len(RAW_KNOWLEDGE_BASE)}")
+
+            torch.save(
+                RAW_KNOWLEDGE_BASE, f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW_docs.pt"
+            )
+
+        else:
+            log.info("Started loading the preprocessed documents. This may take a while...")
+            RAW_KNOWLEDGE_BASE = torch.load(
+                f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW_docs.pt"
+            )
+
+        log.info("Before splitting my documents")
+
+        docs_processed = split_my_documents(
+            100,  # We choose a chunk size adapted to our model
+            RAW_KNOWLEDGE_BASE,
+            tokenizer_name=cfg.retriever.embedding_model_name,
+            cfg=cfg,
+        )
 
         torch.save(
-            RAW_KNOWLEDGE_BASE, f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW.pt"
+            docs_processed, f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/split_docs.pt"
         )
-
+    
     else:
-        log.info("Started loading the preprocessed documents. This may take a while...")
-        RAW_KNOWLEDGE_BASE = torch.load(
-            f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW.pt"
-        )
-
-    log.info("Before splitting my documents")
-
-    docs_processed = split_my_documents(
-        100,  # We choose a chunk size adapted to our model
-        RAW_KNOWLEDGE_BASE,
-        tokenizer_name=cfg.retriever.embedding_model_name,
-    )
+        docs_processed = torch.load(f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/split_docs.pt")
 
     return docs_processed
 
@@ -114,6 +124,7 @@ def split_my_documents(
     chunk_size: int,
     knowledge_base: List[LangchainDocument],
     tokenizer_name: str,
+    cfg: DictConfig,
 ) -> List[LangchainDocument]:
     """
     Split documents into chunks of maximum size `chunk_size` tokens and return a list of documents.
@@ -126,8 +137,9 @@ def split_my_documents(
     #     strip_whitespace=True,
     #     # separators=MARKDOWN_SEPARATORS,
     # )
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
     text_splitter = TokenTextSplitter.from_huggingface_tokenizer(
-        AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True),
+        tokenizer,
         chunk_size=chunk_size,
         chunk_overlap=0,
         add_start_index=True,
@@ -149,6 +161,7 @@ def split_my_documents(
                     doc.metadata["wikipedia_title"] + "\n" + split_doc.page_content
                 )
             # log.info(f"\n\nHere is a split doc: {split_doc.page_content}")
+            # log.info(f"\nWith lengths: {len(tokenizer.tokenize(split_doc.page_content))}")
             docs_processed.append(split_doc)
 
     log.info("Done splitting documents.")
@@ -177,10 +190,11 @@ def get_embedding_model(embedding_model_name: str) -> HuggingFaceEmbeddings:
 
     embedding_model = HuggingFaceEmbeddings(
         model_name=embedding_model_name,
-        multi_process=True,
+        multi_process=False,
         model_kwargs={"device": "cuda" if torch.cuda.is_available() else "cpu"},
         encode_kwargs={
-            "normalize_embeddings": True
+            "normalize_embeddings": True,
+            "batch_size": 64,
         },  # Set `True` for cosine similarity
         show_progress=True,
     )
