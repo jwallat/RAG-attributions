@@ -11,3 +11,8 @@ src/__pycache__/*
 /wandb
 *.pyc
 src/__pycache__/vector_store.cpython-310.pyc
+*.png
+*.json
+*.jsonl
+*.csv
+src/__pycache__/*.*

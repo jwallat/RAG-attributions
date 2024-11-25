@@ -41,8 +41,12 @@ def data_generator(model: LLMReader, dataset: List[dict]):
 
         # final_prompt = prompt_template.format(question=row["question"], context=context)
         # log.info(f"Final prompt:\n\n{final_prompt}")
-
-        final_prompt = model.get_input_in_model_format(row["question"], row["selected_docs"])
+        try:
+            final_prompt = model.get_input_in_model_format(row["question"], row["selected_docs"])
+        except:
+            # pd dataset
+            row = row[1]
+            final_prompt = model.get_input_in_model_format(row["question"], row["selected_docs"])
 
         yield final_prompt
 

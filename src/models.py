@@ -1,11 +1,13 @@
 from abc import ABC
 from typing import List
 from omegaconf import DictConfig
-from transformers import AutoTokenizer
 import torch
 import transformers
 from transformers import (
+    AutoModel,
+    AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
 )
 
 
@@ -120,11 +122,15 @@ class CommandRPlusModel(LLMReader):
         #     trust_remote_code=True,
         # )
 
+        quant_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.cfg.model.name)
+
+        model = AutoModelForCausalLM.from_pretrained(self.cfg.model.name, quantization_config=quant_config, trust_remote_code=True)
 
         pipe = transformers.pipeline(
             "text-generation",
-            model=self.cfg.model.name,
+            model=model,
             tokenizer=self.tokenizer,
             batch_size=self.cfg.model.batch_size,
             trust_remote_code=True,

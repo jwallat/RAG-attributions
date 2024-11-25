@@ -10,6 +10,7 @@ dataset:
   name: "wiki" 
   use_cached_raw_dataset: true
   use_cached_preprocessed_dataset: true
+  post_rationalization_ds: ''
 
 model:
   name: "CohereForAI/c4ai-command-r-plus-4bit"
@@ -17,6 +18,7 @@ model:
   batch_size: 4
   generation_config:
     max_new_tokens: 256
+    # temperature: 0.0 do_sample=False so temperature is not used
 
 retriever:
   type: "bm25" # or "faiss"
