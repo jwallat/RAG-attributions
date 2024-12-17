@@ -2,7 +2,7 @@
 import torch
 
 print("Start loading docs")
-split_docs = torch.load("/home/wallat/RAG/data/faiss/wiki/split_docs.pt")
+split_docs = torch.load("data/faiss/wiki/split_docs.pt")
 
 print("Docs loaded\n\n")
 print(split_docs[0].page_content)
@@ -21,7 +21,7 @@ for i, doc in tqdm(enumerate(split_docs)):
     if i % 100000 == 0:
         if f is not None:
             f.close()
-        f = open(f"/home/wallat/RAG/data/faiss/wiki/split_docs_{i}.jsonl", "w")
+        f = open(f"data/faiss/wiki/split_docs_{i}.jsonl", "w")
     f.write(json.dumps({"id": f"doc{i}", "contents": doc.page_content, "metadata": doc.metadata}) + "\n")
 
 # with open("/home/wallat/RAG/data/faiss/wiki/pyserini/split_docs.jsonl", "w") as f:

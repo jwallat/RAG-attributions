@@ -1,9 +1,7 @@
 # %%
 import json
 
-predictions_file_path = (
-    "/home/wallat/RAG/command_r_attributions_natural_questions.jsonl"
-)
+predictions_file_path = "command_r_attributions_natural_questions.jsonl"
 
 with open(predictions_file_path, "r") as f:
     predictions = [json.loads(line) for line in f]
