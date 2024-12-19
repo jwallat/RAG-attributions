@@ -28,6 +28,7 @@ retriever:
   # embedding_model_name: "Alibaba-NLP/gte-Qwen2-7B-instruct"
   use_cached_embeddings: false
   cache_dir: "data/retrievers/${dataset.name}/"
+  recreate_index: false
 
 reranker:
   model_name: "colbert-ir/colbertv2.0"

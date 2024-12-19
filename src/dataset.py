@@ -21,7 +21,7 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
             log.info("Preapring data:")
 
             if cfg.dataset.name == "wiki":
-                dataset = datasets.load_dataset("kilt_wikipedia", split="full[:1000]")
+                dataset = datasets.load_dataset("kilt_wikipedia", split="full")
                 log.info(f"Dataset has so many items: {len(dataset)}")
 
                 RAW_KNOWLEDGE_BASE = [
@@ -41,9 +41,7 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
             elif cfg.dataset.name == "squad":
                 # Squad v2
                 # dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train")
-                dataset = datasets.load_dataset(
-                    "rajpurkar/squad_v2", split="train[:1000]"
-                )
+                dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train")
                 RAW_KNOWLEDGE_BASE = [
                     LangchainDocument(
                         page_content=doc["context"], metadata={"source": doc["id"]}

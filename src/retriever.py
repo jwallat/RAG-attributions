@@ -43,12 +43,15 @@ class BM25Retriever(Retriever):
         super().__init__(config)
 
         try:
+            if config.retriever.recreate_index:
+                raise Exception("Recreate index")
+
             self.retriever = LuceneSearcher(
                 f"{config.retriever.cache_dir}/pyserini/{config.dataset.name}"
             )
         except:
             log.info(
-                f"Could not load existing pyserini index at: {config.retriever.cache_dir}/pyserini/{config.dataset.name} \n\nCreating new index..."
+                f"Config.retriever.recreate_index is set or could not load existing pyserini index at: {config.retriever.cache_dir}/pyserini/{config.dataset.name} \n\nCreating new index..."
             )
             docs = prepare_data(config)
             self.create_index(

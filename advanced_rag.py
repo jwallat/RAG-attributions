@@ -2,7 +2,7 @@ from tqdm import tqdm
 from typing import Optional, List
 import datasets
 
-# import wandb
+import wandb
 import time
 import json
 from langchain.docstore.document import Document as LangchainDocument
