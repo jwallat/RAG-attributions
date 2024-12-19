@@ -8,9 +8,10 @@ wandb:
 
 dataset:
   name: "wiki" 
-  use_cached_raw_dataset: true
-  use_cached_preprocessed_dataset: true
+  use_cached_raw_dataset: false
+  use_cached_preprocessed_dataset: false
   post_rationalization_ds: ''
+  preprocessed_path: 'data/retrievers/${dataset.name}/'
 
 model:
   name: "CohereForAI/c4ai-command-r-plus-4bit"
@@ -26,6 +27,7 @@ retriever:
   # embedding_model_name: "thenlper/gte-large"
   # embedding_model_name: "Alibaba-NLP/gte-Qwen2-7B-instruct"
   use_cached_embeddings: false
+  cache_dir: "data/retrievers/${dataset.name}/"
 
 reranker:
   model_name: "colbert-ir/colbertv2.0"
