@@ -1,3 +1,4 @@
+import os
 from langchain_text_splitters import TokenTextSplitter
 from tqdm import tqdm
 from typing import List
@@ -20,7 +21,7 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
             log.info("Preapring data:")
 
             if cfg.dataset.name == "wiki":
-                dataset = datasets.load_dataset("kilt_wikipedia", split="full")
+                dataset = datasets.load_dataset("kilt_wikipedia", split="full[:1000]")
                 log.info(f"Dataset has so many items: {len(dataset)}")
 
                 RAW_KNOWLEDGE_BASE = [
@@ -41,7 +42,7 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
                 # Squad v2
                 # dataset = datasets.load_dataset("rajpurkar/squad_v2", split="train")
                 dataset = datasets.load_dataset(
-                    "rajpurkar/squad_v2", split="train[:10]"
+                    "rajpurkar/squad_v2", split="train[:1000]"
                 )
                 RAW_KNOWLEDGE_BASE = [
                     LangchainDocument(
@@ -53,9 +54,11 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
             del dataset
             log.info(f"So many docs in KB: {len(RAW_KNOWLEDGE_BASE)}")
 
+            os.makedirs(cfg.dataset.preprocessed_path, exist_ok=True)
+
             torch.save(
                 RAW_KNOWLEDGE_BASE,
-                f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW_docs.pt",
+                f"{cfg.dataset.preprocessed_path}/RAW_docs.pt",
             )
 
         else:
@@ -63,7 +66,7 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
                 "Started loading the preprocessed documents. This may take a while..."
             )
             RAW_KNOWLEDGE_BASE = torch.load(
-                f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/RAW_docs.pt"
+                f"{cfg.dataset.preprocessed_path}/RAW_docs.pt"
             )
 
         log.info("Before splitting my documents")
@@ -77,13 +80,11 @@ def prepare_data(cfg: DictConfig) -> List[LangchainDocument]:
 
         torch.save(
             docs_processed,
-            f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/split_docs.pt",
+            f"{cfg.dataset.preprocessed_path}/split_docs.pt",
         )
 
     else:
-        docs_processed = torch.load(
-            f"/home/wallat/RAG/data/faiss/{cfg.dataset.name}/split_docs.pt"
-        )
+        docs_processed = torch.load(f"{cfg.dataset.preprocessed_path}/split_docs.pt")
 
     return docs_processed
 
@@ -148,6 +149,6 @@ def split_my_documents(
 
     log.info("\n\nHere are 2 example documents:")
     log.info(docs_processed_unique[0])
-    log.info(docs_processed_unique[42])
+    log.info(docs_processed_unique[8])
 
     return docs_processed_unique

@@ -17,16 +17,15 @@ log = logging.getLogger(__name__)
 def get_reader_LLM(cfg: DictConfig) -> LLMReader:
     model_name = cfg.model.name
 
-    # TODO: All magic numbers should go into the model confic file    
-    if "command-r-plus" in model_name:
+    # TODO: All magic numbers should go into the model confic file
+    if "command-r" in model_name:
         model = CommandRPlusModel(cfg)
-    
+
     elif "llama-3" in model_name:
         model = Llama3Model(cfg)
 
-
     return model
-    
+
 
 def data_generator(model: LLMReader, dataset: List[dict]):
     for row in dataset:
@@ -42,11 +41,15 @@ def data_generator(model: LLMReader, dataset: List[dict]):
         # final_prompt = prompt_template.format(question=row["question"], context=context)
         # log.info(f"Final prompt:\n\n{final_prompt}")
         try:
-            final_prompt = model.get_input_in_model_format(row["question"], row["selected_docs"])
+            final_prompt = model.get_input_in_model_format(
+                row["question"], row["selected_docs"]
+            )
         except:
             # pd dataset
             row = row[1]
-            final_prompt = model.get_input_in_model_format(row["question"], row["selected_docs"])
+            final_prompt = model.get_input_in_model_format(
+                row["question"], row["selected_docs"]
+            )
 
         yield final_prompt
 

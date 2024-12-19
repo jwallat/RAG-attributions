@@ -1,7 +1,8 @@
 from tqdm import tqdm
 from typing import Optional, List
 import datasets
-import wandb
+
+# import wandb
 import time
 import json
 from langchain.docstore.document import Document as LangchainDocument
@@ -26,26 +27,29 @@ from src.vector_store import get_vector_store
 log = logging.getLogger(__name__)
 
 
-
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: DictConfig) -> None:
-    
+
     log.info("Starting up...")
 
     run_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     log.info(f"Run dir: {run_dir}")
 
     # Do not sync the wandb run if we are running on the cluster
-    wandb.init(project=cfg.wandb.project_name, config=dict(cfg), dir=run_dir, mode=cfg.wandb.mode)
+    wandb.init(
+        project=cfg.wandb.project_name,
+        config=dict(cfg),
+        dir=run_dir,
+        mode=cfg.wandb.mode,
+    )
 
     if cfg.retriever.type == "faiss":
-        retriever = FaissRetriever(cfg.retriever)
+        retriever = FaissRetriever(cfg)
         # vector_store, embedding_model = get_vector_store(cfg)
     elif cfg.retriever.type == "bm25":
-        retriever = BM25Retriever(cfg.retriever)
+        retriever = BM25Retriever(cfg)
     reranker = get_reranker(cfg)
     llm = get_reader_LLM(cfg)
-
 
     # Get the task dataset
     task_ds = get_QA_dataset(cfg.dataset.name)
@@ -86,6 +90,7 @@ def get_QA_dataset(ds_name):
 
     return task_ds
 
+
 def process_task_ds(
     dataset: List[dict],
     llm: LLMReader,
@@ -125,12 +130,9 @@ def process_task_ds(
 
     i = 0
     for row in tqdm(dataset, desc="Retrieving documents"):
-        retrieved_docs = retriever.retrieve(
-            questions[i], k=num_retrieved_docs
-        )
+        retrieved_docs = retriever.retrieve(questions[i], k=num_retrieved_docs)
         row["retrieved_docs"] = retrieved_docs
         i += 1
-    
 
     if reranker:
         log.info("=> Reranking documents...")

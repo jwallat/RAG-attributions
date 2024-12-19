@@ -28,6 +28,34 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 pip install -r requirements.txt
 ```
 
+## Running Experiments
+
+You may acquire the attributed answers by running
+
+```bash
+python3 advanced_rag.py ++dataset.name="wiki" ++model.generation_config.max_new_tokens=512 ++model.name="CohereForAI/c4ai-command-r-plus-08-2024" ++model.batch_size=1
+```
+
+This will produce a hydra output folder containing logs and the models predictions. The first run will create an index (per default a pyserini BM25 index over the wikipedia snapshot).
+
+### Faithful Citations Results
+
+After acquiring the standard predictions, we inject adversarial statements into the LLM's context. We create 3 new dataset using the script in `attribution_analysis.ipynb` (in the section "Post-Rationalization Test Dataset"). Running the first 3 cells of that section will result in 3 datasets
+
+- post_ration_random_data.jsonl
+- post_ration_rel_uncited_data.jsonl
+- post_ration_cited_other_data.jsonl
+
+We will again run the model inference for these 3 files. This time using the `qnd.py` script as follows:
+
+```bash
+python3 qnd.py ++dataset.post_rationalization_ds="/home/wallat/RAG/data/predictions/CR+_2024/post_ration_random_data.jsonl" ++model.generation_config.max_new_tokens=512 ++model.name="CohereForAI/c4ai-command-r-plus-08-2024" ++model.batch_size=1
+```
+
+swapping the `++dataset.post_rationalization_ds=<file>` with our 3 files.
+
+Lastly, we move back to the "Post-Rationalization Test *Eval*" section in `attribution_analysis.ipynb` and run the cell with our 3 new prediction files acquired from the earlier step.
+
 ## Slurm and Execution Tips
 
 ### Interactive mode
